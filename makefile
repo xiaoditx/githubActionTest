@@ -1,7 +1,5 @@
-# 设置代码页为UTF-8以支持中文路径和输出（仅在cmd中执行）
-ifeq ($(SHELL),cmd)
-$(shell chcp 65001 >nul 2>&1)
-endif
+# 设置代码页为UTF-8以支持中文路径和输出
+$(shell chcp 65001 >nul)
 
 MAKEFLAGS += -j --output-sync=target
 
@@ -16,7 +14,7 @@ SHELL         := cmd
 
 ifeq ($(ARCH),32)
 # 尝试使用32位编译器的不同可能名称
-CXX      = g++
+CXX      = =g++
 WINDRES  = windres
 WINDRES_FLAG = -F pe-i386
 else
@@ -37,17 +35,6 @@ endif
 CXXFLAGS = -std=c++17 -Wall -Wextra -Wpedantic $(EXTRA_FLAGS) -DUNICODE -D_UNICODE
 LDFLAGS  = -mwindows -municode
 LDLIBS   = -luser32 -lgdi32 -lcomctl32 -lgdiplus
-
-# 根据架构添加编译标志
-ifeq ($(ARCH),32)
-# 32位编译时添加-m32标志
-CXXFLAGS += -m32
-LDFLAGS += -m32
-else
-# 64位编译时添加-m64标志
-CXXFLAGS += -m64
-LDFLAGS += -m64
-endif
 
 # 目录变量
 SRC_DIR   := src

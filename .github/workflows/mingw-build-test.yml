@@ -105,20 +105,6 @@ jobs:
           echo "Running make DEBUG=${{ matrix.DEBUG }} ARCH=${{ matrix.ARCH }}"
           echo "Current directory: %CD%"
           echo "PATH: %PATH%"
-          
-          # 根据编译架构设置不同的编译器路径
-          if "${{ matrix.ARCH }}" equ "32" (
-              echo "Setting up 32-bit compiler environment..."
-              set PATH=C:\msys64\mingw32\bin;%PATH%
-          ) else (
-              echo "Setting up 64-bit compiler environment..."
-              set PATH=C:\msys64\mingw64\bin;%PATH%
-          )
-          
-          echo "Updated PATH: %PATH%"
-          where g++
-          where windres
-          
           make DEBUG=${{ matrix.DEBUG }} ARCH=${{ matrix.ARCH }}
           if %errorlevel% neq 0 (
               echo "Make failed with exit code %errorlevel%, retrying..."
