@@ -108,7 +108,7 @@ jobs:
           
           while ($retryCount -lt $maxRetries -and !$success) {
               $retryCount++
-              Write-Host "Attempt $retryCount of $maxRetries: make DEBUG=${{ matrix.DEBUG }} ARCH=${{ matrix.ARCH }}"
+              Write-Host "Attempt $retryCount of ${maxRetries}: make DEBUG=${{ matrix.DEBUG }} ARCH=${{ matrix.ARCH }}"
               
               try {
                   # 执行make命令并捕获输出
