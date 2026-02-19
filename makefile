@@ -1,13 +1,6 @@
-# 设置代码页为UTF-8以支持中文路径和输出（仅Windows cmd）
-# 注意：$(shell ...)在MSYS2中使用bash执行，需要特殊处理
-ifneq (,$(findstring Windows,$(OS)))
-ifneq (,$(findstring cmd,$(SHELL)))
-    $(shell chcp 65001 >nul 2>&1)
-else ifneq (,$(findstring bash,$(SHELL)))
-    # 在MSYS2 bash中设置UTF-8
-    export LANG=UTF-8
-    export LC_ALL=UTF-8
-endif
+# 设置代码页为UTF-8以支持中文路径和输出（仅在cmd中执行）
+ifeq ($(SHELL),cmd)
+$(shell chcp 65001 >nul 2>&1)
 endif
 
 MAKEFLAGS += -j --output-sync=target
