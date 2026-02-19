@@ -1,0 +1,82 @@
+name: MinGW Build Test (4 Configurations)
+on:
+  # 触发条件1：任何PR提交时触发
+  pull_request:
+    branches: [ '**' ] # 可改为指定分支，如 [ main, master ]
+  # 触发条件2：支持手动触发
+  workflow_dispatch:
+
+jobs:
+  build-test:
+    runs-on: windows-latest # 固定Windows环境
+    # 矩阵策略：覆盖4种编译组合，关闭快速失败（确保所有组合都跑完）
+    strategy:
+      fail-fast: false
+      matrix:
+        DEBUG: [ 0, 1 ]
+        ARCH: [ 32, 64 ]
+
+    steps:
+      # 步骤1：拉取仓库代码
+      - name: Checkout repository code
+        uses: actions/checkout@v4
+
+      # 步骤2：安装ezwinports版本的make 4.4.1（通过winget）
+      - name: Install make 4.4.1 (ezwinports)
+        run: |
+          # 静默安装，自动接受许可协议，避免CI交互阻塞
+          winget install --id ezwinports.make --version 4.4.1 --force `
+            --accept-package-agreements --accept-source-agreements
+          # 自动获取make安装路径，添加到系统PATH（优先级别）
+          $installLocation = winget show ezwinports.make --property InstallLocation | Out-String | Trim()
+          $makeBinPath = Join-Path -Path $installLocation -ChildPath "bin"
+          echo $makeBinPath | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          Write-Host "Successfully added make path: $makeBinPath"
+
+      # 步骤3：安装MSYS2与MinGW工具链（含32/64位编译器）
+      - name: Setup MSYS2 & MinGW toolchain
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          # 安装64位+32位的gcc、g++编译器，自动包含windres等工具
+          install: >-
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-gcc-c++
+            mingw-w64-i686-gcc
+            mingw-w64-i686-gcc-c++
+
+      # 步骤4：将MinGW工具链添加到系统PATH（确保cmd可直接调用）
+      - name: Add MinGW toolchains to system PATH
+        run: |
+          # 64位工具链路径（含g++、windres）
+          echo "C:\msys64\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          # 32位工具链路径（含i686-w64-mingw32-g++）
+          echo "C:\msys64\mingw32\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      # 步骤5：验证环境可用性（强制使用cmd执行，符合要求）
+      - name: Verify toolchain in cmd
+        shell: cmd
+        run: |
+          echo ========== Verify make ==========
+          where make
+          make --version
+          echo.
+          echo ========== Verify g++ ==========
+          where g++
+          g++ --version
+          echo.
+          echo ========== Verify windres ==========
+          where windres
+          windres --version
+          echo.
+          echo ========== Verify 32bit compiler ==========
+          where i686-w64-mingw32-g++
+          i686-w64-mingw32-g++ --version
+
+      # 步骤6：执行make编译测试（核心步骤，cmd执行）
+      - name: Run make (DEBUG=${{ matrix.DEBUG }}, ARCH=${{ matrix.ARCH }})
+        shell: cmd
+        # 若makefile不在仓库根目录，可在下方添加 working-directory: 你的子目录路径
+        run: |
+          make DEBUG=${{ matrix.DEBUG }} ARCH=${{ matrix.ARCH }}
