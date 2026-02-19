@@ -66,9 +66,9 @@ jobs:
           # 安装64位+32位的gcc、g++编译器，自动包含windres等工具
           install: >-
             mingw-w64-x86_64-gcc
-            mingw-w64-x86_64-gcc-c++
+            mingw-w64-x86_64-g++
             mingw-w64-i686-gcc
-            mingw-w64-i686-gcc-c++
+            mingw-w64-i686-g++
 
       # 步骤4：将MinGW工具链添加到系统PATH（确保cmd可直接调用）
       - name: Add MinGW toolchains to system PATH
