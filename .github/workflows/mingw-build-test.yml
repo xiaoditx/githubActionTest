@@ -29,10 +29,33 @@ jobs:
           winget install --id ezwinports.make --version 4.4.1 --force `
             --accept-package-agreements --accept-source-agreements
           # 自动获取make安装路径，添加到系统PATH（优先级别）
-          $installLocation = (winget show ezwinports.make --property InstallLocation | Out-String).Trim()
-          $makeBinPath = Join-Path -Path $installLocation -ChildPath "bin"
-          echo $makeBinPath | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          Write-Host "Successfully added make path: $makeBinPath"
+          # 使用更可靠的方法获取安装路径
+          $wingetOutput = winget show ezwinports.make 2>&1 | Out-String
+          Write-Host "Winget show output: $wingetOutput"
+          
+          # 尝试从输出中提取安装路径
+          # 方法1：使用默认安装路径（如果winget show失败）
+          $defaultInstallPath = "C:\Program Files (x86)\GnuWin32"
+          $makeBinPath = Join-Path -Path $defaultInstallPath -ChildPath "bin"
+          
+          # 验证路径是否存在
+          if (Test-Path $makeBinPath) {
+              Write-Host "Using default make path: $makeBinPath"
+              echo $makeBinPath | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+              Write-Host "Successfully added make path: $makeBinPath"
+          } else {
+              # 方法2：使用winget的安装位置
+              $installLocation = "C:\Program Files (x86)\ezwinports"
+              $makeBinPath = Join-Path -Path $installLocation -ChildPath "bin"
+              
+              if (Test-Path $makeBinPath) {
+                  Write-Host "Using ezwinports make path: $makeBinPath"
+                  echo $makeBinPath | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+                  Write-Host "Successfully added make path: $makeBinPath"
+              } else {
+                  Write-Host "Warning: Could not find make installation path, using system PATH"
+              }
+          }
 
       # 步骤3：安装MSYS2与MinGW工具链（含32/64位编译器）
       - name: Setup MSYS2 & MinGW toolchain
