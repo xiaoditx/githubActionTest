@@ -97,45 +97,20 @@ jobs:
           echo ========== Environment verification completed ==========
           echo All required tools are available in the system PATH
 
-      # 步骤6：执行make编译测试（核心步骤，PowerShell执行以支持重试机制）
+      # 步骤6：执行make编译测试（核心步骤，cmd执行）
       - name: Run make (DEBUG=${{ matrix.DEBUG }}, ARCH=${{ matrix.ARCH }})        
-        shell: powershell
+        shell: cmd
         # 若makefile不在仓库根目录，可在下方添加 working-directory: 你的子目录路径
         run: |
-          $maxRetries = 3
-          $retryCount = 0
-          $success = $false
-          
-          while ($retryCount -lt $maxRetries -and !$success) {
-              $retryCount++
-              Write-Host "Attempt $retryCount of ${maxRetries}: make DEBUG=${{ matrix.DEBUG }} ARCH=${{ matrix.ARCH }}"
-              
-              try {
-                  # 执行make命令并捕获输出
-                  $output = & make DEBUG=${{ matrix.DEBUG }} ARCH=${{ matrix.ARCH }} 2>&1
-                  Write-Host $output
-                  
-                  # 检查退出代码
-                  if ($LASTEXITCODE -eq 0) {
-                      Write-Host "Make completed successfully!"
-                      $success = $true
-                  } else {
-                      Write-Host "Make failed with exit code $LASTEXITCODE"
-                      if ($retryCount -lt $maxRetries) {
-                          Write-Host "Retrying in 5 seconds..."
-                          Start-Sleep -Seconds 5
-                      }
-                  }
-              } catch {
-                  Write-Host "Error during make execution: $($_.Exception.Message)"
-                  if ($retryCount -lt $maxRetries) {
-                      Write-Host "Retrying in 5 seconds..."
-                      Start-Sleep -Seconds 5
-                  }
-              }
-          }
-          
-          if (!$success) {
-              Write-Host "Make failed after $maxRetries attempts"
-              exit 1
-          }
+          echo "Running make DEBUG=${{ matrix.DEBUG }} ARCH=${{ matrix.ARCH }}"
+          echo "Current directory: %CD%"
+          echo "PATH: %PATH%"
+          make DEBUG=${{ matrix.DEBUG }} ARCH=${{ matrix.ARCH }}
+          if %errorlevel% neq 0 (
+              echo "Make failed with exit code %errorlevel%, retrying..."
+              make DEBUG=${{ matrix.DEBUG }} ARCH=${{ matrix.ARCH }}
+              if %errorlevel% neq 0 (
+                  echo "Make failed again with exit code %errorlevel%, retrying one more time..."
+                  make DEBUG=${{ matrix.DEBUG }} ARCH=${{ matrix.ARCH }}
+              )
+          )
