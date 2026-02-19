@@ -31,11 +31,11 @@ jobs:
 
       # 2. 将 MinGW bin 目录添加到 PATH
       - name: Add MinGW bins to PATH
+        shell: powershell
         run: |
           echo "C:\msys64\mingw32\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           echo "C:\msys64\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           echo "C:\msys64\usr\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-        shell: powershell
 
       # 3. 确保 32 位编译器存在（诊断/修复）
       - name: Verify and fix 32-bit compiler
@@ -60,47 +60,46 @@ jobs:
       - name: Verify toolchain in cmd
         shell: cmd
         run: |
-          echo "=== Checking 32-bit compiler ==="
+          echo === Checking 32-bit compiler ===
           where i686-w64-mingw32-g++
           i686-w64-mingw32-g++ --version
           echo.
-          echo "=== Checking 64-bit compiler ==="
+          echo === Checking 64-bit compiler ===
           where x86_64-w64-mingw32-g++
           x86_64-w64-mingw32-g++ --version
           echo.
-          echo "=== Checking windres variants ==="
+          echo === Checking windres variants ===
           where i686-w64-mingw32-windres
           i686-w64-mingw32-windres --version
           where x86_64-w64-mingw32-windres
           x86_64-w64-mingw32-windres --version
           echo.
-          echo "=== Checking make ==="
+          echo === Checking make ===
           where make
           make --version
 
-      # 5. 根据 ARCH 设置正确的 WINDRES 变量（解决64位 windres 架构检测失败）
+      # 5. 根据 ARCH 设置正确的 WINDRES 变量（解决 windres 架构检测失败）
       - name: Set WINDRES for target architecture
-        shell: cmd
+        shell: powershell
         run: |
-          if "%{{ matrix.ARCH }}"=="32" (
-            echo WINDRES=i686-w64-mingw32-windres>> %GITHUB_ENV%
-          ) else (
-            echo WINDRES=x86_64-w64-mingw32-windres>> %GITHUB_ENV%
-          )
-        # 注意：使用 %{{ ... }} 是为了避免 GitHub Actions 表达式冲突，实际应使用 ${{ ... }}
+          if ("${{ matrix.ARCH }}" -eq "32") {
+              echo "WINDRES=i686-w64-mingw32-windres" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          } else {
+              echo "WINDRES=x86_64-w64-mingw32-windres" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          }
 
       # 6. 执行 make 编译（传递 WINDRES 变量）
       - name: Run make (DEBUG=${{ matrix.DEBUG }}, ARCH=${{ matrix.ARCH }})
         shell: cmd
         run: |
-          echo "Running make DEBUG=${{ matrix.DEBUG }} ARCH=${{ matrix.ARCH }}"
-          echo "Using WINDRES=%WINDRES%"
+          echo Running make DEBUG=${{ matrix.DEBUG }} ARCH=${{ matrix.ARCH }}
+          echo Using WINDRES=%WINDRES%
           make DEBUG=${{ matrix.DEBUG }} ARCH=${{ matrix.ARCH }} WINDRES=%WINDRES%
           if %errorlevel% neq 0 (
-              echo "⚠️ Make failed with exit code %errorlevel%, retrying..."
+              echo ⚠️ Make failed with exit code %errorlevel%, retrying...
               make DEBUG=${{ matrix.DEBUG }} ARCH=${{ matrix.ARCH }} WINDRES=%WINDRES%
               if %errorlevel% neq 0 (
-                  echo "⚠️ Make failed again with exit code %errorlevel%, retrying one more time..."
+                  echo ⚠️ Make failed again with exit code %errorlevel%, retrying one more time...
                   make DEBUG=${{ matrix.DEBUG }} ARCH=${{ matrix.ARCH }} WINDRES=%WINDRES%
               )
           )
