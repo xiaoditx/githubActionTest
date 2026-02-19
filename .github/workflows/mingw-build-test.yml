@@ -1,4 +1,5 @@
 name: MinGW Build Test (4 Configurations)
+
 on:
   # 触发条件1：任何PR提交时触发
   pull_request:
