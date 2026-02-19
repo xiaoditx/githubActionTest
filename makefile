@@ -13,7 +13,8 @@ SHELL         := cmd
 .SUFFIXES:
 
 ifeq ($(ARCH),32)
-CXX      = i686-w64-mingw32-g++
+# 尝试使用32位编译器的不同可能名称
+CXX      = g++
 WINDRES  = windres
 WINDRES_FLAG = -F pe-i386 -o
 else

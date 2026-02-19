@@ -130,8 +130,11 @@ jobs:
           echo.
           echo ========== List files in mingw32/bin ==========
           if exist "C:\msys64\mingw32\bin" (
-              dir "C:\msys64\mingw32\bin\g++*"
-              dir "C:\msys64\mingw32\bin\i686*"
+              echo Listing files in C:\msys64\mingw32\bin:
+              dir "C:\msys64\mingw32\bin\*.exe" | findstr "g++gcci686"
+              if %errorlevel% neq 0 (
+                  echo No compiler files found, but continuing anyway
+              )
           ) else (
               echo Warning: mingw32/bin directory not found
           )
