@@ -29,7 +29,7 @@ jobs:
           winget install --id ezwinports.make --version 4.4.1 --force `
             --accept-package-agreements --accept-source-agreements
           # 自动获取make安装路径，添加到系统PATH（优先级别）
-          $installLocation = winget show ezwinports.make --property InstallLocation | Out-String | Trim()
+          $installLocation = (winget show ezwinports.make --property InstallLocation | Out-String).Trim()
           $makeBinPath = Join-Path -Path $installLocation -ChildPath "bin"
           echo $makeBinPath | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           Write-Host "Successfully added make path: $makeBinPath"
