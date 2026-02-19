@@ -14,13 +14,13 @@ SHELL         := cmd
 
 ifeq ($(ARCH),32)
 # 尝试使用32位编译器的不同可能名称
-CXX      = g++
+CXX      = i686-w64-mingw32-g++
 WINDRES  = windres
-WINDRES_FLAG = -F pe-i386 -o
+WINDRES_FLAG = -F pe-i386
 else
 CXX      = g++
 WINDRES  = windres
-WINDRES_FLAG = -F pe-x86-64 -o
+WINDRES_FLAG = -F pe-x86-64
 endif
 
 ifeq ($(DEBUG), 1)
@@ -69,7 +69,7 @@ $(BIN): $(CXX_OBJS) $(OBJ_DIR)/manifest.o
 
 $(OBJ_DIR)/manifest.o: src/list.rc
 	@echo 正在编译资源文件 $< ...
-	@windres -o $@ $<
+	@$(WINDRES) $(WINDRES_FLAG) -o $@ $<
 
 # 编译对象文件 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR) $(PCH_OUT)
