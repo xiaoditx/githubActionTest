@@ -71,10 +71,27 @@ jobs:
       # 步骤4：将MinGW工具链添加到系统PATH（确保cmd可直接调用）
       - name: Add MinGW toolchains to system PATH
         run: |
-          # 64位工具链路径（含g++、windres）
-          echo "C:\msys64\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          # 32位工具链路径（含i686-w64-mingw32-g++）
-          echo "C:\msys64\mingw32\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          # 检查MSYS2安装路径
+          $msys2Path = "C:\msys64"
+          if (Test-Path $msys2Path) {
+              Write-Host "MSYS2 found at: $msys2Path"
+              
+              # 64位工具链路径（含g++、windres）
+              $mingw64Path = Join-Path -Path $msys2Path -ChildPath "mingw64\bin"
+              if (Test-Path $mingw64Path) {
+                  Write-Host "Adding 64-bit MinGW path: $mingw64Path"
+                  echo $mingw64Path | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+              }
+              
+              # 32位工具链路径（含g++）
+              $mingw32Path = Join-Path -Path $msys2Path -ChildPath "mingw32\bin"
+              if (Test-Path $mingw32Path) {
+                  Write-Host "Adding 32-bit MinGW path: $mingw32Path"
+                  echo $mingw32Path | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+              }
+          } else {
+              Write-Host "Warning: MSYS2 not found at expected path"
+          }
 
       # 步骤5：验证环境可用性（强制使用cmd执行，符合要求）
       - name: Verify toolchain in cmd
@@ -84,7 +101,7 @@ jobs:
           where make
           make --version
           echo.
-          echo ========== Verify g++ ==========
+          echo ========== Verify 64bit g++ ==========
           where g++
           g++ --version
           echo.
@@ -92,9 +109,24 @@ jobs:
           where windres
           windres --version
           echo.
-          echo ========== Verify 32bit compiler ==========
-          where i686-w64-mingw32-g++
-          i686-w64-mingw32-g++ --version
+          echo ========== Verify 32bit compiler paths ==========
+          if exist "C:\msys64\mingw32\bin\g++.exe" (
+              echo Found 32-bit g++ at C:\msys64\mingw32\bin\g++.exe
+              C:\msys64\mingw32\bin\g++ --version
+          ) else if exist "C:\msys64\mingw32\bin\i686-w64-mingw32-g++.exe" (
+              echo Found 32-bit g++ at C:\msys64\mingw32\bin\i686-w64-mingw32-g++.exe
+              C:\msys64\mingw32\bin\i686-w64-mingw32-g++ --version
+          ) else (
+              echo Warning: 32-bit g++ not found at expected locations
+          )
+          echo.
+          echo ========== List files in mingw32/bin ==========
+          if exist "C:\msys64\mingw32\bin" (
+              dir "C:\msys64\mingw32\bin\g++*"
+              dir "C:\msys64\mingw32\bin\i686*"
+          ) else (
+              echo Warning: mingw32/bin directory not found
+          )
 
       # 步骤6：执行make编译测试（核心步骤，cmd执行）
       - name: Run make (DEBUG=${{ matrix.DEBUG }}, ARCH=${{ matrix.ARCH }})
