@@ -63,12 +63,10 @@ jobs:
         with:
           msystem: MINGW64
           update: true
-          # 安装64位+32位的gcc、g++编译器，自动包含windres等工具
+          # 安装64位+32位的gcc编译器，g++会作为依赖自动安装
           install: >-
-            mingw-w64-x86_64-gcc
-            mingw-w64-x86_64-g++
-            mingw-w64-i686-gcc
-            mingw-w64-i686-g++
+            mingw-w64-x86_64-toolchain
+            mingw-w64-i686-toolchain
 
       # 步骤4：将MinGW工具链添加到系统PATH（确保cmd可直接调用）
       - name: Add MinGW toolchains to system PATH
