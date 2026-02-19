@@ -1,5 +1,14 @@
-# 设置代码页为UTF-8以支持中文路径和输出
-$(shell chcp 65001 >nul)
+# 设置代码页为UTF-8以支持中文路径和输出（仅Windows cmd）
+# 注意：$(shell ...)在MSYS2中使用bash执行，需要特殊处理
+ifneq (,$(findstring Windows,$(OS)))
+ifneq (,$(findstring cmd,$(SHELL)))
+    $(shell chcp 65001 >nul 2>&1)
+else ifneq (,$(findstring bash,$(SHELL)))
+    # 在MSYS2 bash中设置UTF-8
+    export LANG=UTF-8
+    export LC_ALL=UTF-8
+endif
+endif
 
 MAKEFLAGS += -j --output-sync=target
 
@@ -14,7 +23,7 @@ SHELL         := cmd
 
 ifeq ($(ARCH),32)
 # 尝试使用32位编译器的不同可能名称
-CXX      = i686-w64-mingw32-g++
+CXX      = g++
 WINDRES  = windres
 WINDRES_FLAG = -F pe-i386
 else
@@ -35,6 +44,17 @@ endif
 CXXFLAGS = -std=c++17 -Wall -Wextra -Wpedantic $(EXTRA_FLAGS) -DUNICODE -D_UNICODE
 LDFLAGS  = -mwindows -municode
 LDLIBS   = -luser32 -lgdi32 -lcomctl32 -lgdiplus
+
+# 根据架构添加编译标志
+ifeq ($(ARCH),32)
+# 32位编译时添加-m32标志
+CXXFLAGS += -m32
+LDFLAGS += -m32
+else
+# 64位编译时添加-m64标志
+CXXFLAGS += -m64
+LDFLAGS += -m64
+endif
 
 # 目录变量
 SRC_DIR   := src
