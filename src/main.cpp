@@ -18,7 +18,7 @@ std::optional<danmaku::Element> g_elemButton;
 std::optional<danmaku::Element> g_elemLabelColor1;
 std::optional<danmaku::Element> g_elemEditColor1;
 std::optional<danmaku::Element> g_elemLabelColor2;
-std::optional<danmaku::Element> g_elemEditColor2;
+std::optional<danmaku::ement> g_elemEditColor2;
 
 int WINAPI wWinMain([[maybe_unused]] HINSTANCE hInstance, [[maybe_unused]] HINSTANCE hPrevInstance,
                     [[maybe_unused]] PWSTR pCmdLine, [[maybe_unused]] int nCmdShow)
