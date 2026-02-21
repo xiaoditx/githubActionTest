@@ -74,19 +74,20 @@ jobs:
 
       # 5. 执行 make 编译（矩阵组合）- 通过命令行传递正确的 WINDRES_FLAG
       - name: Run make (DEBUG=${{ matrix.DEBUG }}, ARCH=${{ matrix.ARCH }})
-        shell: cmd
+        shell: msys2 {0}
         run: |
-          set "WINDRES_FLAG=-F pe-i386"
-          if "${{ matrix.ARCH }}"=="64" set "WINDRES_FLAG=-F pe-x86-64"
-          echo "Running make DEBUG=${{ matrix.DEBUG }} ARCH=${{ matrix.ARCH }} WINDRES_FLAG=%WINDRES_FLAG%"
-          echo "Current directory: %CD%"
-          echo "PATH: %PATH%"
-          make DEBUG=${{ matrix.DEBUG }} ARCH=${{ matrix.ARCH }} WINDRES_FLAG=%WINDRES_FLAG%
-          if %errorlevel% neq 0 (
-              echo "⚠️ Make failed with exit code %errorlevel%, retrying..."
-              make DEBUG=${{ matrix.DEBUG }} ARCH=${{ matrix.ARCH }} WINDRES_FLAG=%WINDRES_FLAG%
-              if %errorlevel% neq 0 (
-                  echo "⚠️ Make failed again with exit code %errorlevel%, retrying one more time..."
-                  make DEBUG=${{ matrix.DEBUG }} ARCH=${{ matrix.ARCH }} WINDRES_FLAG=%WINDRES_FLAG%
-              )
-          )
+          export PATH="/mingw64/bin:/mingw32/bin:$PATH"
+          WINDRES_FLAG="-F pe-i386"
+          if [ "${{ matrix.ARCH }}" = "64" ]; then WINDRES_FLAG="-F pe-x86-64"; fi
+          echo "Running make DEBUG=${{ matrix.DEBUG }} ARCH=${{ matrix.ARCH }} WINDRES_FLAG=$WINDRES_FLAG"
+          echo "Current directory: $(pwd)"
+          echo "PATH: $PATH"
+          make DEBUG=${{ matrix.DEBUG }} ARCH=${{ matrix.ARCH }} WINDRES_FLAG="$WINDRES_FLAG"
+          if [ $? -ne 0 ]; then
+              echo "⚠️ Make failed with exit code $?, retrying..."
+              make DEBUG=${{ matrix.DEBUG }} ARCH=${{ matrix.ARCH }} WINDRES_FLAG="$WINDRES_FLAG"
+              if [ $? -ne 0 ]; then
+                  echo "⚠️ Make failed again with exit code $?, retrying one more time..."
+                  make DEBUG=${{ matrix.DEBUG }} ARCH=${{ matrix.ARCH }} WINDRES_FLAG="$WINDRES_FLAG"
+              fi
+          fi
